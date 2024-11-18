@@ -1,4 +1,4 @@
-# Serverless-Localstack-Esbuild Boilerplate
+# Serverless-Localstack-Esbuild Dev Environemnt Template
 
 A development environment template for TypeScript-based Serverless v4+ applications running on Localstack. Features hot-reloading, debugging support, and optimized builds with esbuild.
 
