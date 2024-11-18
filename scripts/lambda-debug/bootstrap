@@ -1,0 +1,79 @@
+#!/bin/sh
+# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
+if [ -z "$NODE_PATH" ];
+then
+  nodejs_mods="/opt/nodejs/node_modules"
+  nodejs20_mods="/opt/nodejs/node20/node_modules"
+  runtime_mods="/var/runtime/node_modules"
+  task="/var/runtime:/var/task"
+  export NODE_PATH="$nodejs20_mods:$nodejs_mods:$runtime_mods:$task"
+fi
+
+if [ -n "$AWS_LAMBDA_FUNCTION_MEMORY_SIZE" ];
+then
+  # For V8 options, both '_' and '-' are supported
+  # Ref: https://github.com/nodejs/node/pull/14093
+  semi_space_str_und="--max_semi_space_size"
+  old_space_str_und="--max_old_space_size"
+
+  semi_space_str=${semi_space_str_und//[_]/-}
+  old_space_str=${old_space_str_und//[_]/-}
+
+  # Do not override customers' semi and old space size options if they specify them
+  # with NODE_OPTIONS env var. If they just set one, use the default value from v8
+  # for the other.
+  case $NODE_OPTIONS in
+  *$semi_space_str_und*);;
+  *$old_space_str_und*);;
+  *$semi_space_str*);;
+  *$old_space_str*);;
+  *)
+    # New space should be 5% of AWS_LAMBDA_FUNCTION_MEMORY_SIZE, leaving 5% available for buffers, for instance,
+    # very large images or JSON files, which are allocated as C memory, rather than JavaScript heap in V8.
+    new_space=$(($AWS_LAMBDA_FUNCTION_MEMORY_SIZE / 10))
+    # The young generation size of the V8 heap is three times the size of the semi-space,
+    # an increase of 1 MiB to semi-space applies to each of the three individual semi-spaces
+    # and causes the heap size to increase by 3 MiB.
+    semi_space=$(($new_space / 6))
+    # Old space should be 90% of AWS_LAMBDA_FUNCTION_MEMORY_SIZE
+    old_space=$(($AWS_LAMBDA_FUNCTION_MEMORY_SIZE - $new_space))
+    MEMORY_ARGS=(
+      "$semi_space_str=$semi_space"
+      "$old_space_str=$old_space"
+    )
+    ;;
+  esac
+fi
+
+# If NODE_EXTRA_CA_CERTS is being set by the customer, don't override. Else, include RDS CA
+if [ -z "${NODE_EXTRA_CA_CERTS+set}" ]; then
+  # Use the default CA bundle in regions that have 3 dashes in their name
+  if [ "${AWS_REGION:0:6}" != "us-gov" ] && [ "${AWS_REGION//[^-]}" == "---" ]; then
+    export NODE_EXTRA_CA_CERTS=/etc/pki/tls/certs/ca-bundle.crt
+  fi
+fi
+
+export AWS_EXECUTION_ENV=AWS_Lambda_nodejs20.x
+
+NODE_ARGS=(
+    --expose-gc
+    --max-http-header-size 81920
+    "${MEMORY_ARGS[@]}"
+    /var/runtime/index.mjs
+    )
+
+if [ -z "$AWS_LAMBDA_EXEC_WRAPPER" ]; then
+  exec /var/lang/bin/node "${NODE_ARGS[@]}"
+else
+  wrapper="$AWS_LAMBDA_EXEC_WRAPPER"
+  if [ ! -f "$wrapper" ]; then
+    echo "$wrapper: does not exist"
+    exit 127
+  fi
+  if [ ! -x "$wrapper" ]; then
+    echo "$wrapper: is not an executable"
+    exit 126
+  fi
+    exec -- "$wrapper" /var/lang/bin/node "${NODE_ARGS[@]}"
+fi

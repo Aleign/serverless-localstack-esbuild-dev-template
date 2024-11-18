@@ -1,0 +1,33 @@
+# package directories
+node_modules
+jspm_packages
+
+# Serverless directories
+.serverless/
+.packaged/
+lambda-mount/
+dist/
+
+.dynamodb/
+.tool-versions
+
+yarn-error.log
+
+coverage/
+
+*.DS_Store
+.DS_Store
+
+test.js
+
+# Sentry Config File
+.env.sentry-build-plugin
+
+repopack-output.txt
+
+#localstack localdata
+.localstack_data/
+
+esbuild-meta/
+
+repomix-output.txt

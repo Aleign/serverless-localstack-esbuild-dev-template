@@ -1,0 +1,75 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Local Debug Environment",
+      "type": "process",
+      "command": "yarn",
+      "args": [
+        "_debug"
+      ],
+      "options": {
+        "cwd": "${workspaceRoot}"
+      },
+      //"dependsOn": ["node arch"],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always",
+        "echo": false
+      }
+    },
+    {
+      "label": "Stop Debug Environment",
+      "type": "process",
+      "command": "yarn",
+      "args": [
+        "stop"
+      ],
+      "options": {
+        "cwd": "${workspaceRoot}",
+      },
+      "presentation": {
+        "panel": "shared",
+        "reveal": "always",
+        "echo": false
+      }
+    },
+    {
+      "label": "Kill Lambdas",
+      "type": "process",
+      "command": "yarn",
+      "args": [
+        "kill-lambda"
+      ],
+      "options": {
+        "cwd": "${workspaceRoot}",
+      },
+      "presentation": {
+        "panel": "shared",
+        "reveal": "always",
+        "echo": false
+      }
+    },
+    //use this task to test the default node arch type vscode is using.
+    //you may need to add the env var to Local Dev Environemtn task to ensure it matches the terminal for local deployments
+    {
+      "label": "node arch",
+      "type": "process",
+      "command": "yarn",
+      "args": [
+        "node-arch"
+      ],
+      "options": {
+        "cwd": "${workspaceRoot}",
+        // "env": {
+        //   "PATH": "/Users/fridaystreet/.nvm/versions/node/v20.18.0/bin:/usr/local/bin"
+        // }
+      },
+      "presentation": {
+        "panel": "shared",
+        "reveal": "silent",
+        "echo": false
+      }
+    }
+  ]
+}

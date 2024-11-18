@@ -1,0 +1,104 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "httpHandler Debugger",
+      "address": "127.0.0.1",
+      "localRoot": "${workspaceFolder}/lambda-mount",
+      "port": 19891,
+      "remoteRoot": "/var/task",
+      "request": "attach",
+      "type": "node",
+      "sourceMaps": true,
+      "restart": true,
+      "autoAttachChildProcesses": true,
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    },
+    {
+      "name": "webSocketHandler Debugger",
+      "address": "127.0.0.1",
+      "localRoot": "${workspaceFolder}/lambda-mount",
+      "port": 19892,
+      "remoteRoot": "/var/task",
+      "request": "attach",
+      "type": "node",
+      "sourceMaps": true,
+      "restart": true,
+      "autoAttachChildProcesses": true,
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    },
+    {
+      "name": "File Watcher",
+      "request": "launch",
+      "type": "node",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": [
+        "_watch"
+      ],
+      "console": "integratedTerminal",
+      "presentation": {
+        "panel": "new",
+        "reveal": "silent",
+        "echo": false
+      }
+    },
+    {
+      "name": "Localstack Logs",
+      "request": "launch",
+      "type": "node",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": [
+        "log-localstack"
+      ],
+      "console": "integratedTerminal",
+      "presentation": {
+        "panel": "new",
+        "reveal": "silent",
+        "echo": false
+      }
+    },
+    {
+      "name": "Lambda Logs",
+      "request": "launch",
+      "type": "node",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": [
+        "log-lambda"
+      ],
+      "console": "integratedTerminal",
+      "presentation": {
+        "panel": "new",
+        "reveal": "always",
+        "echo": false
+      }
+    },
+  ],
+  "compounds": [
+    //you may need to set the PATH here to the same node path as the terminal
+    //otheriwse it will use whatever node vsocde is using globally which could be different version or arch on mac
+    //only required for local deployments so tasks run same as yarn <command> on terminal
+    {
+      "name": "Start Debug Without Build & Deploy",
+      "configurations": ["File Watcher", "httpHandler Debugger", "webSocketHandler Debugger"],//, "Localstack Logs", "Lambda Logs",],
+      // "env": {
+      //   "PATH": "~/.nvm/versions/node/v20.18.0/bin:${env:PATH}"
+      // },
+      "stopAll": true
+    },
+    {
+      "name": "Start Local Deployed Debug Environment",
+      "configurations": ["File Watcher", "httpHandler Debugger", "webSocketHandler Debugger"],//, "Localstack Logs", "Lambda Logs",],
+      "preLaunchTask": "Start Local Debug Environment",
+      // "env": {
+      //   "PATH": "~/.nvm/versions/node/v20.18.0/bin:${env:PATH}"
+      // },
+      "stopAll": true
+    }
+  ]}

@@ -1,0 +1,179 @@
+# Welcome to Serverless!
+# migrate from serverless
+# https://medium.com/ssense-tech/the-ssense-migration-journey-from-serverless-framework-to-sam-5fa611d658d6
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: api
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+frameworkVersion: "4"
+plugins:
+
+  # - serverless-plugin-warmup
+  - serverless-plugin-ifelse
+  - serverless-scriptable-plugin
+  - serverless-prune-plugin
+  - serverless-localstack
+build:
+  esbuild:
+    configFile: ./esbuild.config.js
+# you can add packaging information here
+package:
+  # individually: true
+  #this means it will only include the node_moduels that couldn't be built by esbuild
+  patterns:
+    - '!**'
+
+custom:
+  development:
+    cors:
+      origin: 'http://localhost:3000/'
+  production: 
+    cors: 
+      origin: '*'
+  scriptable:
+    hooks:
+      before:package:createDeploymentArtifacts: ./scripts/yarnclean-serverless.sh
+  serverlessIfElse:
+    - If: '"${env:LAMBDA_DEBUG_MODE,0}" == "1"'
+      Set:
+        # custom.localstack.lambda.mountCode: false
+        functions.httpHandler.environment:
+          NODE_OPTIONS: --inspect=0.0.0.0:19891
+        functions.webSocketHandler.environment:
+          NODE_OPTIONS: --inspect=0.0.0.0:19892
+  localstack:
+    stages:
+      - development
+    host: localhost
+    edgePort: 4566
+    autostart: false
+    lambda:
+      mountCode: ${env:LAMBDA_MOUNT_CWD, false}
+  warmup:
+    officeHoursWarmer:
+      enabled: true
+      events:
+        - schedule: cron(0/5 8-17 ? * MON-FRI *)
+      concurrency: 10
+      verbose: true
+      logRetentionInDays: 14
+    outOfOfficeHoursWarmer:
+      enabled: true
+      events:
+        - schedule: cron(0/5 0-7 ? * MON-FRI *)
+        - schedule: cron(0/5 18-23 ? * MON-FRI *)
+        - schedule: cron(0/5 * ? * SAT-SUN *)
+      concurrency: 1
+      verbose: false
+    testWarmer:
+      enabled: false
+  prune:
+    automatic: true
+    number: 10
+
+provider:
+  name: aws
+  tags:
+    _custom_id_: ${env:CUSTOM_ID, 'myservice'}
+  runtime: nodejs20.x
+  memorySize: 10240
+  timeout: 30
+  # you can overwrite defaults here
+  stage: ${opt:stage, 'development'}
+  region: ${env:AWS_REGION, 'ap-southeast-2'}
+  #websocketsApiName: custom-websockets-api-name
+  #websocketsApiRouteSelectionExpression: $request.body.action # custom routes are selected by the value of the action property in the body
+  #websocketsDescription: Custom Serverless Websockets
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - cloudwatch:GetMetricStatistics
+            - cloudwatch:ListMetrics
+            - cloudwatch:PutMetricData
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - ec2:CreateNetworkInterface
+            - ec2:DescribeNetworkInterfaces
+            - ec2:DeleteNetworkInterface
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - dynamodb:BatchWriteItem
+            - dynamodb:BatchGetItem
+            - dynamodb:DeleteItem
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:UpdateItem
+            - dynamodb:DescribeStream
+            - dynamodb:DescribeTable
+            - dynamodb:GetRecords
+            - dynamodb:GetShardIterator
+            - dynamodb:ListStreams
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - ses:SendRawEmail
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - s3:*
+          Resource: "*"
+
+  # you can define service wide environment variables here
+  environment:
+    NODE_CONFIG_DIR: ./src/config
+    NODE_ENV: ${self:provider.stage}
+    STAGE: ${self:provider.stage}
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+
+functions:
+  httpHandler:
+    handler: src/index.httpHandler
+    tracing: PassThrough
+    events:
+      - http:
+          path: todo
+          method: any
+  webSocketHandler:
+    handler: src/index.webSocketHandler
+    tracing: PassThrough
+    events:
+      - websocket:
+          route: $connect
+      - websocket:
+          route: $disconnect
+      - websocket:
+          route: $default
+          routeResponseSelectionExpression: $default
+
+# you can add CloudFormation resource templates here
+resources:
+  #this allows you to set the _custom_id for the localstack api endpoints
+  extensions:
+    # WebsocketsApi:
+    #   Properties:
+    #     Tags:
+    #       - Key: _custom_id_
+    #         Value: ${env:CUSTOM_ID, 'myservice'}
+    #uncomment this block if you are using V1 API Gateway
+    ApiGatewayRestApi:
+      Properties:
+        Tags:
+          - Key: _custom_id_
+            Value: ${env:CUSTOM_ID, 'myservice'}

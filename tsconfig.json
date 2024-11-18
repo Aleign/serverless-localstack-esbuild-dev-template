@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "module": "esnext",
+    "target": "esnext",
+    "lib": [
+      "dom",
+      "esnext",
+      "esnext.asynciterable"
+    ],
+    "skipLibCheck": true,
+    "noImplicitAny": false,
+    "allowSyntheticDefaultImports": true,
+    "ignoreDeprecations": "5.0",
+    "moduleResolution": "node",
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "sourceMap": true,
+    "inlineSources": true,
+    "importHelpers": true,
+    "esModuleInterop": true,
+    "declaration": true,
+    "sourceRoot": "/lambda-mount",
+    "outDir": "./lambda-mount/.serverless/build/src",
+    "rootDir": "./src",
+    "baseUrl": "./",
+    "paths": {
+      "@utils": ["./src/@utils"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.mjs", "src/**/*.ejs", "src/**/*.graphql"],
+  "exclude": ["node_modules"]
+}

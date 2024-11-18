@@ -1,0 +1,90 @@
+services:
+  localstack:
+    container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}" #localstack/localstack-full for web interface
+    image: localstack/localstack-pro:latest
+    ports:
+      - "0.0.0.0:4566:4566"            # LocalStack Gateway
+      - "0.0.0.0:4510-4559:4510-4559"  # external services port range
+      - "8080:8080"                    # LocalStack Dashboard
+    environment:
+      # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
+      #- PERSISTENCE=1
+      # - LS_LOG=trace
+      - LOCALSTACK_AUTH_TOKEN=""
+      - DEBUG=${DEBUG:-0}
+      - DOCKER_SOCK=/var/run/docker.sock
+      # - EAGER_SERVICE_LOADING=1
+      - IS_OFFLINE=true
+      # - LAMBDA_REMOTE_DOCKER=0
+      - LAMBDA_DEBUG_MODE=${LAMBDA_DEBUG_MODE:-0}
+      - LAMBDA_MOUNT_CWD=${PWD}/lambda-mount #TODO this doesn't seem to have any affect it should override serverless lambda.mmountCode
+      # - LAMBDA_DOCKER_FLAGS=-e LOCALSTACK_INIT_LOG_LEVEL=${LAMBDA_LOG_LEVEL:-info} -p 19891:19891
+      - LAMBDA_DEBUG_MODE_CONFIG_PATH=${LAMBDA_DEBUG_MODE:+/app/debug_config.yaml}
+      - PROVIDER_OVERRIDE_APIGATEWAY=next_gen  #cannot use this if you have a websocket in your serverless config
+      # - LAMBDA_DOCKER_FLAGS=-p 19891:19891
+      #- LAMBDA_DOCKER_FLAGS=-p 19891:19891
+      - LAMBDA_RUNTIME_ENVIRONMENT_TIMEOUT=300
+      # - LAMBDA_LIMITS_CONCURRENT_EXECUTIONS=1
+      # - DNS_SERVER=1.1.1.1
+      # - DNS_NAME_PATTERNS_TO_RESOLVE_UPSTREAM='.*(ecr|lambda).*.amazonaws.com' #enable this if you have other things that need to call aws
+      # - WAIT_FOR_DEBUGGER=30
+      # - HOSTNAME_EXTERNAL=localhost
+      - LAMBDA_LIMITS_TOTAL_CODE_SIZE = 8880530636800
+      # PUBLIC: documented after AWS changed validation around 2023-11
+      - LAMBDA_LIMITS_CODE_SIZE_ZIPPED = 5552428800
+      # SEMI-PUBLIC: not actively communicated
+      - LAMBDA_LIMITS_CODE_SIZE_UNZIPPED = 55262144000
+      # PUBLIC: documented upon customer request
+      - LAMBDA_LIMITS_CREATE_FUNCTION_REQUEST_SIZE = 7770167211
+      - DYNAMODB_REMOVE_EXPIRED_ITEMS=1
+      - GATEWAY_LISTEN=0.0.0.0
+      - START_WEB=1
+      # - LAMBDA_LIMITS_CONCURRENT_EXECUTIONS=1
+      - LAMBDA_REMOVE_CONTAINERS=1
+      # - DISABLE_CORS_CHECKS=1 #would be great to know how to fix this
+      # - DISABLE_CUSTOM_CORS_APIGATEWAY=0 #so it can properly emulate live environment
+      # - LOCALSTACK_VOLUME_DIR=${LOCALSTACK_VOLUME_DIR:-./.localstack_data}
+
+#all of the ENV Vars that are passed able to be passed through to the ;ambda function
+#     "LAMBDA_DEBUG_MODE",
+#     "LAMBDA_DEBUG_MODE_CONFIG",
+#     "LAMBDA_DISABLE_AWS_ENDPOINT_URL",
+#     "LAMBDA_DOCKER_DNS",
+#     "LAMBDA_DOCKER_FLAGS",
+#     "LAMBDA_DOCKER_NETWORK",
+#     "LAMBDA_EVENTS_INTERNAL_SQS",
+#     "LAMBDA_EVENT_SOURCE_MAPPING",
+#     "LAMBDA_IGNORE_ARCHITECTURE",
+#     "LAMBDA_INIT_DEBUG",
+#     "LAMBDA_INIT_BIN_PATH",
+#     "LAMBDA_INIT_BOOTSTRAP_PATH",
+#     "LAMBDA_INIT_DELVE_PATH",
+#     "LAMBDA_INIT_DELVE_PORT",
+#     "LAMBDA_INIT_POST_INVOKE_WAIT_MS",
+#     "LAMBDA_INIT_USER",
+#     "LAMBDA_INIT_RELEASE_VERSION",
+#     "LAMBDA_KEEPALIVE_MS",
+#     "LAMBDA_LIMITS_CONCURRENT_EXECUTIONS",
+#     "LAMBDA_LIMITS_MINIMUM_UNRESERVED_CONCURRENCY",
+#     "LAMBDA_LIMITS_TOTAL_CODE_SIZE",
+#     "LAMBDA_LIMITS_CODE_SIZE_ZIPPED",
+#     "LAMBDA_LIMITS_CODE_SIZE_UNZIPPED",
+#     "LAMBDA_LIMITS_CREATE_FUNCTION_REQUEST_SIZE",
+#     "LAMBDA_LIMITS_MAX_FUNCTION_ENVVAR_SIZE_BYTES",
+#     "LAMBDA_LIMITS_MAX_FUNCTION_PAYLOAD_SIZE_BYTES",
+#     "LAMBDA_PREBUILD_IMAGES",
+#     "LAMBDA_RUNTIME_IMAGE_MAPPING",
+#     "LAMBDA_REMOVE_CONTAINERS",
+#     "LAMBDA_RETRY_BASE_DELAY_SECONDS",
+#     "LAMBDA_RUNTIME_EXECUTOR",
+#     "LAMBDA_RUNTIME_ENVIRONMENT_TIMEOUT",
+#     "LAMBDA_RUNTIME_VALIDATION",
+#     "LAMBDA_SYNCHRONOUS_CREATE",
+#     "LAMBDA_SQS_EVENT_SOURCE_MAPPING_INTERVAL",
+#     "LAMBDA_TRUNCATE_STDOUT",
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./.localstack_data}:/var/lib/localstack"
+      - "${LOCALSTACK_VOLUME_DIR:-./.localstack_data}/tmp:/tmp"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - .:/app
+

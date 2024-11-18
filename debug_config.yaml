@@ -1,0 +1,6 @@
+functions:
+  arn:aws:lambda:ap-southeast-2:000000000000:function:api-development-httpHandler:
+    debug-port: 19891
+  arn:aws:lambda:ap-southeast-2:000000000000:function:api-development-webSocketHandler:
+    debug-port: 19892
+

@@ -1,0 +1,77 @@
+FROM public.ecr.aws/lambda/nodejs:20
+
+#public.ecr.aws/amazonlinux/amazonlinux:2023
+#public.ecr.aws/lambda/nodejs:20   #couldn't use this image in the end ass you can't manage the users on it.
+#but the amazonlinux image is the same build the node one is built from
+
+# run this is getting 403 forbidden pulling image
+# docker logout public.ecr.aws
+
+# fix for python ssl https://repost.aws/questions/QUD05zou8LRXKWhuhq_VQj0Q/issues-installing-openssl-on-lambda-nodejs-base-image
+
+# Increase file descriptor limits
+RUN mkdir -p /etc/security && \
+    touch /etc/security/limits.conf && \
+    echo "fs.file-max = 65535" >> /etc/sysctl.conf && \
+    echo "* soft nofile 65535" >> /etc/security/limits.conf && \
+    echo "* hard nofile 65535" >> /etc/security/limits.conf
+
+WORKDIR /tmp/install
+
+RUN dnf clean all && \
+    rm -rf /var/cache/dnf/* && \
+    dnf makecache && \
+    #dnf upgrade -y && \
+    dnf install -y docker python3 gcc gcc-c++ make tar git openssl python3-pip python3-urllib3 clang && \
+    dnf clean all && \
+    rm -rf /var/cache/dnf/*
+
+# Install Node.js 20 needed on public.ecr.aws/amazonlinux/amazonlinux:2023 only
+# RUN curl -fsSL https://rpm.nodesource.com/setup_20.x | bash - && \
+#     yum install -y nodejs
+
+# doesn't work on public.ecr.aws/amazonlinux/amazonlinux:2023 does on public.ecr.aws/lambda/nodejs:20
+# RUN LD_LIBRARY_PATH="" pip3 install --no-cache-dir --upgrade 'urllib3<2' awscli-local[ver1]
+
+RUN curl --output localstack-cli-3.8.0-linux-arm64-onefile.tar.gz \
+    --location https://github.com/localstack/localstack-cli/releases/download/v3.8.0/localstack-cli-3.8.0-linux-arm64-onefile.tar.gz && \
+    tar xvzf localstack-cli-3.8.0-linux-*-onefile.tar.gz -C /usr/local/bin
+
+RUN npm install -g yarn serverless
+
+WORKDIR /app
+
+# Create volume mount points
+VOLUME ["/app", "/app/node_modules", "/usr/local/share/.cache/yarn", "/var/run/docker.sock"]
+
+# Set default environment variables
+ENV NODE_ENV=development \
+    STAGE=development \
+    AWS_ACCESS_KEY_ID=localstack \
+    AWS_SECRET_ACCESS_KEY=localstack \
+    SERVERLESS_LICENSE_KEY="" \
+    SENTRY_SKIP_INIT=true \
+    SLS_DEBUG=* \
+    AWS_REGION=ap-southeast-2 \
+    LAMBDA_MOUNT_CWD=${PWD} \
+    USER_ID=${DU:-1000} \
+    GROUP_ID=${DG:-1000}
+# Set entrypoint script
+# COPY scripts/dev-deploy.sh /usr/local/bin/package.sh
+# RUN chmod +x /usr/local/bin/package.sh
+
+#run as the same user as host if getting file permission issues
+# ARG USER_ID
+# ARG GROUP_ID
+# RUN echo "User:Group = ${USER_ID}:${GROUP_ID}"
+# RUN chown -R ${USER_ID}:${GROUP_ID} /app
+# USER ${USER_ID}:${GROUP_ID}
+
+# RUN mkdir -p /app/node_modules && \
+#     chown -R ${USER_ID}:${GROUP_ID} /app/node_modules
+
+# RUN mkdir -p /app/yarn-cache && \
+#     chown -R ${USER_ID}:${GROUP_ID} /app/yarn-cache
+
+ENTRYPOINT ["yarn"]
+CMD ["-v", ""]
