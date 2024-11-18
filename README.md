@@ -72,16 +72,15 @@ Located in `esbuild-meta`:
 
 ### Build tips
 
-If you've having trouble getting you could to run in lambda, the best approach to try is to exclude all node_modules from the build. you can do this by uncommeenting the package: 'external' option.
+If you're having trouble getting your code to run in lambda, the best approach to try is to exclude all node_modules from the build. you can do this by uncommenting the package: 'external' option.
 
-This isn't realy desired for production as it ends up with your package potentially being huge. I guess the desired outcome would be to have as many modules as you can built-in.
+This isn't realy desired for production as it ends up with your package potentially being huge. The desired outcome would be to have as many modules as you can built-in.
 
 So to get to that you can take 1 of 2 approaches.
 
 1) start by excluding everything and include them one by one
 2) start with everything included and exclude them one by one as you run your function and it reports an error that it can't find a package or something.
 
-As a rule of thumb generally from our findings if you exclude a package, all of it's depenencies will probably need to be excluded too.
 
 ## Debugging Guide
 
