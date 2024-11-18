@@ -1,6 +1,6 @@
 # Serverless-Localstack-Esbuild Boilerplate
 
-A production-ready development environment for TypeScript-based Serverless v4+ applications running on Localstack. Features hot-reloading, debugging support, and optimized builds with esbuild.
+A development environment template for TypeScript-based Serverless v4+ applications running on Localstack. Features hot-reloading, debugging support, and optimized builds with esbuild.
 
 ## Features
 - TypeScript support with esbuild
