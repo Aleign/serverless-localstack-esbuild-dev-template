@@ -52,6 +52,9 @@ Runs typechecking and esbuild configuration. Generates build reports in the esbu
 ### `yarn watch`
 Enables hot-reloading during development.
 
+### Other Scripts
+There are many other scripts in the scripts directory, they are all generally related to the above two commands. But can be useful to run separately, they are also all initiated via simple package.json scripts so that's the best place to start
+
 ## Build System
 
 ### Build Optimization
@@ -65,6 +68,20 @@ Located in `esbuild-meta`:
 - Detailed breakdown
 - Dependency graphs
 - Historical comparisons (last 2 builds)
+  - You can change this with setting ESBUILD_META_HISTORY in the set-env-vars.sh file
+
+### Build tips
+
+If you've having trouble getting you could to run in lambda, the best approach to try is to exclude all node_modules from the build. you can do this by uncommeenting the package: 'external' option.
+
+This isn't realy desired for production as it ends up with your package potentially being huge. I guess the desired outcome would be to have as many modules as you can built-in.
+
+So to get to that you can take 1 of 2 approaches.
+
+1) start by excluding everything and include them one by one
+2) start with everything included and exclude them one by one as you run your function and it reports an error that it can't find a package or something.
+
+As a rule of thumb generally from our findings if you exclude a package, all of it's depenencies will probably need to be excluded too.
 
 ## Debugging Guide
 
@@ -84,8 +101,46 @@ Located in `esbuild-meta`:
 - Limited concurrent request handling
 - VSCode-specific debugging optimizations
 
-### Debug Port Conflicts
-Edit debug_config.yaml to assign unique ports per handler.
+
+### General debugging info
+Debugging with localstack can feel like a bit of a pain at first, especially in comparison to serverless-offline if you are used to this. The debugger attachment isn't always 100% effective which can somettimes feel like it's just not working, but you'll probably find that just restarting the debug in vscode and firing your api request will pick it up.
+
+Once you get going with it, it does work pretty good and you'll tend to not notice these issues anymore.
+
+#### what's going on when debugging
+
+Essentially the lambda functions get the NODE_OPTIONS flag with --inspect set which loads the lambda function with inspect running. Due to this you obviously can't run more than one instance of each handler. Which the localstack team have done a great job of handling with the new debug mode features. But it can make things feel quite slow, especially if you are trying to debug a full instacne of a frontend trying to talk to your backend (ie a frontend sending multiple requests at once as it loads different parts of the app). In fact I'd actaully say it's impossoible to do this with localstack at this point. (Happy to be corrected by anyone)
+
+If you need to debug like this, I honetsly would suggest using serverless-offline instead. We've purposely kept this out of this boilerplate at this point, because it doesn't currently support the latest serverless 4 with esbuild. Once it does, we will be bringing it back in to handle this very scenario (unless localstack have some how solved it by then)
+
+#### Auto Attach in VScode
+From what we've found, you need to make sure you have auto attach enabled so that it attaches to the lambda debug process when it first loads. If you don't it seems to be very hit and miss, or you can opt to use --inspect-brk but be warned, this will then break everytime you save your code and it rebuilds from the watcher. Gets frustrating pretty quickly
+
+#### File watcher.
+yarn watch (or run by the debugger task automatically) will run the file watcher. This will auto matcially build back into the ./;ambda-mount directory and straight into your lambda function when running in debug mode. You can see these updates happening in your lambda docker logs. If you don't see something like this, hotreload isn't working for some reason
+
+time="2024-11-18T08:07:20Z" level=warning msg="Reset initiated: HotReload" func=go.amzn.com/lambda/rapid.handleReset file="/home/runner/work/lambda-runtime-init/lambda-runtime-init/lambda/rapid/handlers.go:710"
+
+#### debug_config.yaml
+
+This is the file you need to edit to configure the debug ports for your handlers. When you have multiple handlers (probably easier to just use it even if you have one) localstack will use this to automatically open that debug port for that handler
+
+#### serverless file config for debugging.
+
+We opted to use this appraoch for enabling lambda functions to run inspect, basically becuase we couldn't find any other way to do it, and it seems localstack doesn't quite go this far yet. You can pass NODE_OPTIONS through the localstack flags, but then you have the same inpect port on each diofferently handler, which isn't going to work
+
+
+So in the serverless.yaml we have used serverles-elsif plugin to switch inspect on and off based on if you have called yarn debug or yarn start. Add more or less functions here if you wish
+
+
+serverlessIfElse:
+- If: '"${env:LAMBDA_DEBUG_MODE,0}" == "1"'
+	Set:
+		functions.httpHandler.environment:
+			NODE_OPTIONS: --inspect=0.0.0.0:19891
+		functions.webSocketHandler.environment:
+			NODE_OPTIONS: --inspect=0.0.0.0:19892
+
 
 ### Node Version Mismatches
 Configure VSCode tasks to use the correct Node binary:
