@@ -131,7 +131,7 @@ We opted to use this appraoch for enabling lambda functions to run inspect, basi
 
 So in the serverless.yaml we have used serverles-elsif plugin to switch inspect on and off based on if you have called yarn debug or yarn start. Add more or less functions here if you wish
 
-
+```yaml
 serverlessIfElse:
 - If: '"${env:LAMBDA_DEBUG_MODE,0}" == "1"'
 	Set:
@@ -139,7 +139,7 @@ serverlessIfElse:
 			NODE_OPTIONS: --inspect=0.0.0.0:19891
 		functions.webSocketHandler.environment:
 			NODE_OPTIONS: --inspect=0.0.0.0:19892
-
+```
 
 ### Node Version Mismatches
 Configure VSCode tasks to use the correct Node binary:
@@ -201,6 +201,7 @@ eg, this is pointing to node install as arm64 and not x64 which is what the temr
 
 you need to adjust the Local Debug task to point to your node version otherwise vscode will just use the globally installed node
 
+```json
 {
 	"label": "Start Local Debug Environment",
 	"type": "process",
@@ -218,6 +219,7 @@ you need to adjust the Local Debug task to point to your node version otherwise 
 		"echo": false
 	}
 }
+```
 
 ### MacOS Users
 Set file descriptor limits:
