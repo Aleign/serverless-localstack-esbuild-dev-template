@@ -134,11 +134,11 @@ So in the serverless.yaml we have used serverles-elsif plugin to switch inspect 
 ```yaml
 serverlessIfElse:
   - If: '"${env:LAMBDA_DEBUG_MODE,0}" == "1"'
-  Set:
-		functions.httpHandler.environment:
-			NODE_OPTIONS: --inspect=0.0.0.0:19891
-		functions.webSocketHandler.environment:
-			NODE_OPTIONS: --inspect=0.0.0.0:19892
+    Set:
+		  functions.httpHandler.environment:
+			  NODE_OPTIONS: --inspect=0.0.0.0:19891
+		  functions.webSocketHandler.environment:
+			  NODE_OPTIONS: --inspect=0.0.0.0:19892
 ```
 
 ### Node Version Mismatches
