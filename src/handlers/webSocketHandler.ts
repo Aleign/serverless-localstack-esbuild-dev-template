@@ -15,9 +15,6 @@ export const webSocketHandler = async (event, context) => {
 
     switch(eventType) {
       case 'CONNECT':
-        response.headers = headers['Sec-WebSocket-Protocol'] ? {
-          'Sec-WebSocket-Protocol': headers['Sec-WebSocket-Protocol']
-        } : undefined
 
         //store your connection id in your database
         break
