@@ -1,5 +1,10 @@
 #!/bin/bash
-cd .serverless/build
+
+if [ "$NODE_ENV" = "development" ]; then
+  cd .esbuild/.build
+else
+  cd .esbuild/.serverless
+fi
 
 # Find and verify zip file exists
 ZIP_FILE=$(find . -maxdepth 1 -name "*.zip")
